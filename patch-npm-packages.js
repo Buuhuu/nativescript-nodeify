@@ -31,6 +31,7 @@ module.exports = function($logger, $projectData, $usbLiveSyncService) {
 
     // never touch these
     var whitelist = [
+        "tweetnacl",
         "uuid",
     ];
 
