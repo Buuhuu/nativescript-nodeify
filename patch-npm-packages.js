@@ -198,6 +198,16 @@ module.exports = function($logger, $projectData, $usbLiveSyncService) {
     try {
         var packages = [];
 
+        // patch global dependencies
+        var appPackageJson = require(path.join(__dirname, "..", "..", "package.json"));
+        var customGlobalPatches = {};
+        var customLocalPatches;
+        if (appPackageJson.nativescript["nodeify"]) {
+            customGlobalPatches = appPackageJson.nativescript["nodeify"]["global-dependencies"] || {};
+            whitelist = appPackageJson.nativescript["nodeify"]["whitelist"] || whitelist;
+            customLocalPatches = appPackageJson.nativescript["nodeify"]["package-dependencies"];
+        }
+
         function getPackageJsons(folderStr) {
             var folder = fs.readdirSync(folderStr);
             for (var j = 0; j < folder.length; j++) {
@@ -215,20 +225,12 @@ module.exports = function($logger, $projectData, $usbLiveSyncService) {
             getPackageJsons(path.join(__dirname, "node_modules"));
         }
 
-        // patch global dependencies
-        var appPackageJson = require(path.join(__dirname, "..", "..", "package.json"));
-        var customGlobalPatches = {};
-        if (appPackageJson.nativescript["nodeify"]) {
-            customGlobalPatches = appPackageJson.nativescript["nodeify"]["global-dependencies"] || {};
-            whitelist = appPackageJson.nativescript["nodeify"]["whitelist"] || whitelist;
-        }
-        
         for (var p in packages) {
             patchPackage(packages[p], customGlobalPatches);
         }
 
         // replace any inner dependencies (should hardly ever be required btw)
-        var customLocalPatches = appPackageJson.nativescript["nodeify"] ? appPackageJson.nativescript["nodeify"]["package-dependencies"] : undefined;
+
         if (customLocalPatches) {
             for (var patchMe in customLocalPatches) {
                 if (customLocalPatches.hasOwnProperty(patchMe)) {
