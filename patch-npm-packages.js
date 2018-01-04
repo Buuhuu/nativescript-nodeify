@@ -12,9 +12,9 @@ module.exports = function($logger, $projectData, $usbLiveSyncService) {
         path = require("path"),
         replaceInFile = require("replace-in-file");
 
-    function log(what) {
-    // enable this line to see what the nodeify plugin is up to
-    // console.log(what);
+    function log(what, e) {
+        // enable this line to see what the nodeify plugin is up to
+        console.log(what);
     }
 
     var shims = require("./shims.json");
@@ -30,10 +30,7 @@ module.exports = function($logger, $projectData, $usbLiveSyncService) {
     }
 
     // never touch these
-    var whitelist = [
-        "tweetnacl",
-        "uuid",
-    ];
+    var whitelist = [];
 
     function changeFiles(files, replace, by) {
         return replaceInFile.sync({
@@ -220,7 +217,12 @@ module.exports = function($logger, $projectData, $usbLiveSyncService) {
 
         // patch global dependencies
         var appPackageJson = require(path.join(__dirname, "..", "..", "package.json"));
-        var customGlobalPatches = appPackageJson.nativescript["nodeify"] ? appPackageJson.nativescript["nodeify"]["global-dependencies"] || {} : {};
+        var customGlobalPatches = {};
+        if (appPackageJson.nativescript["nodeify"]) {
+            customGlobalPatches = appPackageJson.nativescript["nodeify"]["global-dependencies"] || {};
+            whitelist = appPackageJson.nativescript["nodeify"]["whitelist"] || whitelist;
+        }
+        
         for (var p in packages) {
             patchPackage(packages[p], customGlobalPatches);
         }
